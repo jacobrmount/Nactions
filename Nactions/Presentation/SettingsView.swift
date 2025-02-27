@@ -1,8 +1,11 @@
-// Nactions/Presentation/SettingsView.swift
+// Presentation/SettingsView.swift
 import SwiftUI
-import UIKit
 
 struct SettingsView: View {
+    @State private var showingExportSuccess = false
+    @State private var showingImportSuccess = false
+    @State private var showingImportFailure = false
+    
     var body: some View {
         NavigationView {
             Form {
@@ -16,32 +19,34 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .alert("Export Successful", isPresented: $showingExportSuccess) {
+                Button("OK", role: .cancel) {}
+            }
+            .alert("Import Successful", isPresented: $showingImportSuccess) {
+                Button("OK", role: .cancel) {}
+            }
+            .alert("Import Failed", isPresented: $showingImportFailure) {
+                Button("OK", role: .cancel) {}
+            }
         }
     }
-    
-    // MARK: - Export
     
     private func exportTokens() {
-        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let rootVC = scene.windows.first?.rootViewController else {
-            return
+        TokenBackupManager.exportTokens { success in
+            if success {
+                showingExportSuccess = true
+            }
         }
-        TokenBackupManager.exportTokens(presentingViewController: rootVC)
     }
     
-    // MARK: - Import
-    
     private func importTokens() {
-        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let rootVC = scene.windows.first?.rootViewController else {
-            return
-        }
-        TokenBackupManager.importTokens(presentingViewController: rootVC) { success in
+        TokenBackupManager.importTokens { success in
             if success {
-                print("✅ Import succeeded.")
+                showingImportSuccess = true
             } else {
-                print("❌ Import failed.")
+                showingImportFailure = true
             }
         }
     }
 }
+

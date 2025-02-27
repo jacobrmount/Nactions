@@ -20,7 +20,9 @@ struct AddTokenView: View {
                         TextField("API Token", text: $apiToken)
                             .disableAutocorrection(true)
                             .textContentType(.none)
-                            .autocapitalization(.none)
+                            #if os(iOS)
+                            .textInputAutocapitalization(.never)
+                            #endif
                     }
                 }
 
