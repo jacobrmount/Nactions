@@ -1,5 +1,4 @@
-// NotionAPI/Sources/NotionAPIClient+POST.swift
-
+// API/NotionAPIClient+POST.swift
 import Foundation
 
 extension NotionAPIClient {
@@ -21,7 +20,7 @@ extension NotionAPIClient {
         if let startCursor = startCursor { bodyDict["start_cursor"] = startCursor }
         if let pageSize = pageSize { bodyDict["page_size"] = pageSize }
         
-        let jsonData = try JSONSerialization.data(withJSONObject: bodyDict, options: [])
+        let jsonData = try JSONSerialization.data(withJSONObject: bodyDict)
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -153,3 +152,15 @@ extension NotionAPIClient {
         }
     }
 }
+extension NotionSearchFilter {
+    var dictionary: [String: Any] {
+        var result: [String: Any] = [:]
+        result["property"] = property
+        result["value"] = value
+        if let type = type {
+            result["type"] = type
+        }
+        return result
+    }
+}
+

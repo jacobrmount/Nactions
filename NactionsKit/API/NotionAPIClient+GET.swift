@@ -1,5 +1,4 @@
-// NotionAPI/Sources/NotionAPIClient+GET.swift
-
+// API/NotionAPIClient+GET.swift
 import Foundation
 
 public extension NotionAPIClient {

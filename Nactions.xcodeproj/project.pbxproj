@@ -134,88 +134,10 @@
 		};
 		4289FD7E2D70F20E00EC2762 /* Exceptions for "NactionsKit" folder in "NactionsKit" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				API/Models/DELETE/NotionDeleteBlockModels.swift,
-				API/Models/GET/NotionBlock.swift,
-				API/Models/GET/NotionBlockChildrenResponse.swift,
-				API/Models/GET/NotionComment.swift,
-				API/Models/GET/NotionDatabase.swift,
-				API/Models/GET/NotionPage.swift,
-				API/Models/GET/NotionPropertyItem.swift,
-				API/Models/GET/NotionUserListResponse.swift,
-				API/Models/NotionAPIError.swift,
-				API/Models/PATCH/NotionAppendBlockChildrenModels.swift,
-				API/Models/PATCH/NotionUpdateBlockModels.swift,
-				API/Models/PATCH/NotionUpdateDatabaseModels.swift,
-				API/Models/POST/NotionCreateCommentModels.swift,
-				API/Models/POST/NotionCreateDatabaseModels.swift,
-				API/Models/POST/NotionCreatePageModels.swift,
-				API/Models/POST/NotionCreateTokenModels.swift,
-				API/Models/POST/NotionQueryDatabaseModels.swift,
-				API/Models/POST/NotionSearchModels.swift,
-				API/Models/Token.swift,
-				API/NotionAPIClient.swift,
-				"API/NotionAPIClient+DELETE.swift",
-				"API/NotionAPIClient+GET.swift",
-				"API/NotionAPIClient+PATCH.swift",
-				"API/NotionAPIClient+POST.swift",
-				"Business Logic/DatabaseService.swift",
-				"Business Logic/TokenRefreshScheduler.swift",
-				"Business Logic/TokenService.swift",
-				"Business Logic/WidgetDataManager.swift",
-				DataManagement/AppGroupConfig.swift,
-				DataManagement/CoreDataStack.swift,
-				DataManagement/TokenStorage/TokenBackupManager.swift,
-				DataManagement/TokenStorage/TokenDataController.swift,
-				Models/NactionsDataModel.xcdatamodeld,
-				Models/NotionDatabaseModel.swift,
-				Models/NotionToken.swift,
-			);
 			publicHeaders = (
 				NactionsKit.h,
 			);
 			target = 4289FD652D70F20E00EC2762 /* NactionsKit */;
-		};
-		4289FD9A2D71290F00EC2762 /* Exceptions for "NactionsKit" folder in "Nactions" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				API/Models/DELETE/NotionDeleteBlockModels.swift,
-				API/Models/GET/NotionBlock.swift,
-				API/Models/GET/NotionBlockChildrenResponse.swift,
-				API/Models/GET/NotionComment.swift,
-				API/Models/GET/NotionDatabase.swift,
-				API/Models/GET/NotionPage.swift,
-				API/Models/GET/NotionPropertyItem.swift,
-				API/Models/GET/NotionUserListResponse.swift,
-				API/Models/NotionAPIError.swift,
-				API/Models/PATCH/NotionAppendBlockChildrenModels.swift,
-				API/Models/PATCH/NotionUpdateBlockModels.swift,
-				API/Models/PATCH/NotionUpdateDatabaseModels.swift,
-				API/Models/POST/NotionCreateCommentModels.swift,
-				API/Models/POST/NotionCreateDatabaseModels.swift,
-				API/Models/POST/NotionCreatePageModels.swift,
-				API/Models/POST/NotionCreateTokenModels.swift,
-				API/Models/POST/NotionQueryDatabaseModels.swift,
-				API/Models/POST/NotionSearchModels.swift,
-				API/Models/Token.swift,
-				API/NotionAPIClient.swift,
-				"API/NotionAPIClient+DELETE.swift",
-				"API/NotionAPIClient+GET.swift",
-				"API/NotionAPIClient+PATCH.swift",
-				"API/NotionAPIClient+POST.swift",
-				"Business Logic/DatabaseService.swift",
-				"Business Logic/TokenRefreshScheduler.swift",
-				"Business Logic/TokenService.swift",
-				"Business Logic/WidgetDataManager.swift",
-				DataManagement/AppGroupConfig.swift,
-				DataManagement/CoreDataStack.swift,
-				DataManagement/TokenStorage/TokenBackupManager.swift,
-				DataManagement/TokenStorage/TokenDataController.swift,
-				Models/NactionsDataModel.xcdatamodeld,
-				Models/NotionDatabaseModel.swift,
-				Models/NotionToken.swift,
-			);
-			target = 42BAE9B52D7062F700E90D94 /* Nactions */;
 		};
 		42BAE9DC2D7062F800E90D94 /* Exceptions for "Nactions" folder in "Nactions" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -243,7 +165,6 @@
 		4289FD672D70F20E00EC2762 /* NactionsKit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				4289FD9A2D71290F00EC2762 /* Exceptions for "NactionsKit" folder in "Nactions" target */,
 				4289FD7E2D70F20E00EC2762 /* Exceptions for "NactionsKit" folder in "NactionsKit" target */,
 			);
 			path = NactionsKit;

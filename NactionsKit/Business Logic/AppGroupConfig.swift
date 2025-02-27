@@ -1,6 +1,5 @@
 // Nactions/BusinessLogic/AppGroupConfig.swift
 import Foundation
-import NactionsKit
 
 /// Handles configuration and access to shared app group resources
 struct AppGroupConfig {

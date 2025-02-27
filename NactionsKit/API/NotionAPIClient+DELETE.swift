@@ -1,5 +1,4 @@
-// NotionAPI/Sources/NotionAPIClient+DELETE.swift
-
+// API/NotionAPIClient+DELETE.swift
 import Foundation
 
 extension NotionAPIClient {

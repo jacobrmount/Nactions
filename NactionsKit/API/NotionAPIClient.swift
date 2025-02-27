@@ -1,4 +1,4 @@
-// DataLayer/NotionAPIClient.swift
+// API/NotionAPIClient.swift
 
 import Foundation
 

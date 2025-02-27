@@ -1,3 +1,4 @@
+// API/NotionAPIError.swift
 import Foundation
 
 public enum NotionAPIError: Error, LocalizedError {

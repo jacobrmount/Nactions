@@ -1,20 +1,16 @@
 // Nactions/NactionsApp.swift
 import SwiftUI
-import BackgroundTasks
+import NactionsKit
 
 @main
 struct NactionsApp: App {
-    @ObservedObject var tokenService = TokenService.shared
-
+    // Initialize Core Data stack
+    let coreDataStack = CoreDataStack.shared
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()  // ✅ Updated from NotionConnectionView to ContentView
-                .onAppear {
-                    Task {
-                        await tokenService.validateStoredTokens()
-                    }
-                    TokenRefreshScheduler.shared.registerBackgroundTask()
-                }
+            ContentView()
+                .environment(\.managedObjectContext, coreDataStack.viewContext)
         }
     }
 }
