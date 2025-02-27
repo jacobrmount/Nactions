@@ -1,11 +1,10 @@
-// NotionAPI/Sources/NotionAPIClient+PATCH.swift
-
+// API/NotionAPIClient+PATCH.swift
 import Foundation
 
 extension NotionAPIClient {
     
     // MARK: - Update Database
-    /// Updates a database’s title, description, properties, cover, or icon.
+    /// Updates a database's title, description, properties, cover, or icon.
     /// - Parameters:
     ///   - databaseID: The identifier for the database to update.
     ///   - requestBody: A NotionUpdateDatabaseRequest containing the fields to update.
@@ -32,7 +31,7 @@ extension NotionAPIClient {
     }
     
     // MARK: - Update Block
-    /// Updates a block’s content based on the block type.
+    /// Updates a block's content based on the block type.
     /// - Parameters:
     ///   - blockID: The identifier for the block to update.
     ///   - requestBody: A NotionUpdateBlockRequest containing the fields to update.
@@ -84,6 +83,4 @@ extension NotionAPIClient {
             throw NotionAPIError.decodingError(error)
         }
     }
-    
-    // Existing POST methods (searchByTitle, queryDatabase, createPage, createDatabase, createComment, createToken) remain unchanged...
 }

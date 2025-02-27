@@ -1,5 +1,4 @@
-// NotionAPI/Sources/NotionAPIClient+POST.swift
-
+// API/NotionAPIClient+POST.swift
 import Foundation
 
 extension NotionAPIClient {
@@ -17,11 +16,11 @@ extension NotionAPIClient {
         var bodyDict: [String: Any] = [:]
         if let query = query { bodyDict["query"] = query }
         if let sort = sort { bodyDict["sort"] = sort.dictionary }
-        if let filter = filter { bodyDict["filter"] = filter.dictionary }
+        if let filter = filter { bodyDict["filter"] = filter.dictionaryRepresentation }
         if let startCursor = startCursor { bodyDict["start_cursor"] = startCursor }
         if let pageSize = pageSize { bodyDict["page_size"] = pageSize }
         
-        let jsonData = try JSONSerialization.data(withJSONObject: bodyDict, options: [])
+        let jsonData = try JSONSerialization.data(withJSONObject: bodyDict)
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -151,5 +150,16 @@ extension NotionAPIClient {
         } catch {
             throw NotionAPIError.decodingError(error)
         }
+    }
+}
+
+// Keep the extension from NotionSearchFilter but remove the dictionary property
+// It's now renamed to dictionaryRepresentation in the NotionAPIModels.swift file
+extension NotionSearchSort {
+    var dictionary: [String: Any] {
+        return [
+            "property": property,
+            "direction": direction
+        ]
     }
 }
