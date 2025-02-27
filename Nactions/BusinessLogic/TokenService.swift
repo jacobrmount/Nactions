@@ -2,6 +2,7 @@
 import Foundation
 import Combine
 import CoreData
+import WidgetKit
 
 @MainActor
 public final class TokenService: ObservableObject {
@@ -100,6 +101,56 @@ public final class TokenService: ObservableObject {
     func refreshToken(for token: NotionToken) async -> String? {
         try? await Task.sleep(nanoseconds: 1_000_000_000)
         return token.apiToken + "_refreshed"
+    }
+    
+    // MARK: - Widget Support
+    
+    // Update the widget data whenever tokens change
+    func updateWidgetData() {
+        WidgetDataManager.shared.shareTokensWithWidgets()
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+    
+    // Widget-aware CRUD operations
+    
+    // Override the original saveToken to update widgets after saving
+    func saveTokenAndUpdateWidgets(name: String, apiToken: String) {
+        saveToken(name: name, apiToken: apiToken)
+        
+        // Allow time for Core Data to save
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.updateWidgetData()
+        }
+    }
+    
+    // Override the original updateTokenCredentials to update widgets
+    func updateTokenCredentialsAndWidgets(for token: NotionToken, newApiToken: String) {
+        updateTokenCredentials(for: token, newApiToken: newApiToken)
+        
+        // Allow time for Core Data to save
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.updateWidgetData()
+        }
+    }
+    
+    // Override the original deleteToken to update widgets
+    func deleteTokenAndUpdateWidgets(_ token: NotionToken) {
+        deleteToken(token)
+        
+        // Allow time for Core Data to save
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.updateWidgetData()
+        }
+    }
+    
+    // Call this when tokens are validated
+    func validateTokensAndUpdateWidgets() async {
+        await validateStoredTokens()
+        
+        // Update widget data after validation
+        DispatchQueue.main.async {
+            self.updateWidgetData()
+        }
     }
 }
 
