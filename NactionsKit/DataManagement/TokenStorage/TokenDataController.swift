@@ -18,6 +18,21 @@ final class TokenDataController {
         }
     }
     
+    // **MARK: - Fetch Activated Tokens**
+    func fetchActivatedTokens() -> [NotionToken] {
+        let context = CoreDataStack.shared.viewContext
+        let request: NSFetchRequest<Token> = Token.fetchRequest()
+        request.predicate = NSPredicate(format: "isActivated == true AND connectionStatus == true")
+        
+        do {
+            let tokenEntities = try context.fetch(request)
+            return tokenEntities.map { $0.toNotionToken() }
+        } catch {
+            print("Error fetching activated tokens: \(error)")
+            return []
+        }
+    }
+    
     // **MARK: - Save New Token**
     func saveToken(name: String, apiToken: String) {
         CoreDataStack.shared.performBackgroundTask { backgroundContext in
@@ -25,6 +40,7 @@ final class TokenDataController {
             newToken.name = name
             newToken.apiToken = apiToken
             newToken.connectionStatus = false
+            newToken.isActivated = false // Default to inactive
             
             do {
                 try backgroundContext.save()
@@ -46,6 +62,7 @@ final class TokenDataController {
                     tokenEntity.name = updatedToken.name
                     tokenEntity.apiToken = updatedToken.apiToken
                     tokenEntity.connectionStatus = updatedToken.isConnected
+                    tokenEntity.isActivated = updatedToken.isActivated
                     // lastUpdatedDate is automatically updated in willSave()
                     try backgroundContext.save()
                     print("Token updated successfully.")
@@ -54,6 +71,26 @@ final class TokenDataController {
                 }
             } catch {
                 print("Error updating token: \(error)")
+            }
+        }
+    }
+    
+    // **MARK: - Toggle Token Activation**
+    func toggleTokenActivation(tokenID: UUID, isActivated: Bool) {
+        CoreDataStack.shared.performBackgroundTask { backgroundContext in
+            let request: NSFetchRequest<Token> = Token.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", tokenID as CVarArg)
+            
+            do {
+                if let tokenEntity = try backgroundContext.fetch(request).first {
+                    tokenEntity.isActivated = isActivated
+                    try backgroundContext.save()
+                    print("Token activation status updated to: \(isActivated)")
+                } else {
+                    print("Token with id \(tokenID) not found for activation update.")
+                }
+            } catch {
+                print("Error updating token activation: \(error)")
             }
         }
     }

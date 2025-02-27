@@ -1,14 +1,7 @@
 // DataLayer/TokenBackupManager.swift
 import SwiftUI
 import UniformTypeIdentifiers
-
-#if canImport(UIKit)
 import UIKit
-#endif
-
-#if canImport(AppKit)
-import AppKit
-#endif
 
 final class TokenBackupManager {
     
@@ -26,14 +19,7 @@ final class TokenBackupManager {
             // Write JSON data to a temporary file
             let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("NotionTokens.json")
             try jsonData.write(to: tempURL)
-            
-            #if os(iOS)
-            // iOS implementation using UIKit
-            exportTokensIOS(from: tempURL, completion: completion)
-            #elseif os(macOS)
-            // macOS implementation using AppKit
-            exportTokensMacOS(from: tempURL, completion: completion)
-            #endif
+            exportTokens(from: tempURL, completion: completion)
         } catch {
             print("Error exporting tokens: \(error.localizedDescription)")
             completion(false)
@@ -43,17 +29,11 @@ final class TokenBackupManager {
     // MARK: - Import Tokens
     
     static func importTokens(completion: @escaping (Bool) -> Void) {
-        #if os(iOS)
         importTokensIOS(completion: completion)
-        #elseif os(macOS)
-        importTokensMacOS(completion: completion)
-        #endif
     }
     
-    // MARK: - iOS Implementations
-    
-    #if os(iOS)
-    private static func exportTokensIOS(from fileURL: URL, completion: @escaping (Bool) -> Void) {
+    // MARK: - Export Tokens
+        private static func exportTokens(from fileURL: URL, completion: @escaping (Bool) -> Void) {
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let rootVC = scene.windows.first?.rootViewController else {
             completion(false)
@@ -115,50 +95,6 @@ final class TokenBackupManager {
             completionHandler?(nil)
         }
     }
-    #endif
-    
-    // MARK: - macOS Implementations
-    
-    #if os(macOS)
-    private static func exportTokensMacOS(from fileURL: URL, completion: @escaping (Bool) -> Void) {
-        let savePanel = NSSavePanel()
-        savePanel.canCreateDirectories = true
-        savePanel.showsTagField = false
-        savePanel.nameFieldStringValue = "NotionTokens.json"
-        savePanel.allowedContentTypes = [UTType.json]
-        
-        savePanel.beginSheetModal(for: NSApp.keyWindow!) { response in
-            if response == .OK, let targetURL = savePanel.url {
-                do {
-                    let data = try Data(contentsOf: fileURL)
-                    try data.write(to: targetURL)
-                    completion(true)
-                } catch {
-                    print("Error saving file: \(error.localizedDescription)")
-                    completion(false)
-                }
-            } else {
-                completion(false)
-            }
-        }
-    }
-    
-    private static func importTokensMacOS(completion: @escaping (Bool) -> Void) {
-        let openPanel = NSOpenPanel()
-        openPanel.canChooseFiles = true
-        openPanel.canChooseDirectories = false
-        openPanel.allowsMultipleSelection = false
-        openPanel.allowedContentTypes = [UTType.json]
-        
-        openPanel.beginSheetModal(for: NSApp.keyWindow!) { response in
-            if response == .OK, let url = openPanel.url {
-                processImportedFile(at: url, completion: completion)
-            } else {
-                completion(false)
-            }
-        }
-    }
-    #endif
     
     // MARK: - Shared Implementation
     

@@ -1,4 +1,4 @@
-// NactionsKit/DataLayer/Token.swift
+// DataLayer/Token.swift
 import Foundation
 import CoreData
 
@@ -10,6 +10,7 @@ public class Token: NSManagedObject {
         self.id = UUID()
         self.createdDate = Date()
         self.lastUpdatedDate = Date()
+        self.isActivated = false // Default to inactive
     }
     
     public override func willSave() {
@@ -43,9 +44,15 @@ public extension Token {
     @NSManaged var createdDate: Date
     @NSManaged var lastUpdatedDate: Date
     @NSManaged var connectionStatus: Bool
+    @NSManaged var isActivated: Bool
     
     func toNotionToken() -> NotionToken {
-        let Token = self.apiToken
-        return NotionToken(id: self.id, name: self.name, apiToken: Token, isConnected: self.connectionStatus)
+        return NotionToken(
+            id: self.id,
+            name: self.name,
+            apiToken: self.apiToken,
+            isConnected: self.connectionStatus,
+            isActivated: self.isActivated
+        )
     }
 }

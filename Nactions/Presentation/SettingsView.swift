@@ -1,4 +1,4 @@
-// Presentation/SettingsView.swift
+/* Presentation/SettingsView.swift
 import SwiftUI
 
 struct SettingsView: View {
@@ -49,4 +49,4 @@ struct SettingsView: View {
         }
     }
 }
-
+ */

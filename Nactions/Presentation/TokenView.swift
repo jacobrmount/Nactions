@@ -2,52 +2,50 @@
 import SwiftUI
 import LocalAuthentication
 
-#if os(macOS)
-import AppKit
-#endif
-
 struct TokenView: View {
     @ObservedObject var tokenManager = TokenService.shared
     @State private var showingAddToken = false
     @State private var tokenToEdit: NotionToken?
     @State private var tokenToDelete: NotionToken?
     @State private var showingDeleteConfirmation = false
+    @State private var showingExportSuccess = false
+    @State private var showingImportSuccess = false
+    @State private var showingImportFailure = false
 
     var body: some View {
-        #if os(iOS)
         // iOS maintains NavigationView and floating button design
         NavigationView {
             tokenListContent
                 .navigationTitle("Tokens")
+                .navigationBarItems(
+                    trailing: HStack(spacing: 16) {
+                        Button("Import") {
+                            importTokens()
+                        }
+                        
+                        Text("|")
+                            .foregroundColor(.gray)
+                        
+                        Button("Export") {
+                            exportTokens()
+                        }
+                    }
+                )
                 .sheet(isPresented: $showingAddToken) {
                     AddTokenView(tokenToEdit: $tokenToEdit, isPresented: $showingAddToken)
                         .presentationDetents([.medium, .large])
                         .presentationDragIndicator(.visible)
                 }
+                .alert("Export Successful", isPresented: $showingExportSuccess) {
+                    Button("OK", role: .cancel) {}
+                }
+                .alert("Import Successful", isPresented: $showingImportSuccess) {
+                    Button("OK", role: .cancel) {}
+                }
+                .alert("Import Failed", isPresented: $showingImportFailure) {
+                    Button("OK", role: .cancel) {}
+                }
         }
-        #else
-        // macOS version (fits into tab-based UI)
-        tokenListContent
-            .alert(isPresented: $showingDeleteConfirmation) {
-                Alert(
-                    title: Text("Delete Token"),
-                    message: Text("This action cannot be undone. Are you sure?"),
-                    primaryButton: .destructive(Text("Delete")) {
-                        if let token = tokenToDelete {
-                            tokenManager.deleteToken(token)
-                        }
-                        tokenToDelete = nil
-                    },
-                    secondaryButton: .cancel {
-                        tokenToDelete = nil
-                    }
-                )
-            }
-            .sheet(isPresented: $showingAddToken) {
-                AddTokenView(tokenToEdit: $tokenToEdit, isPresented: $showingAddToken)
-                    .frame(width: 400, height: 300)
-            }
-        #endif
     }
     
     private var tokenListContent: some View {
@@ -56,29 +54,36 @@ struct TokenView: View {
                 List {
                     ForEach(tokenManager.tokens, id: \.id) { token in
                         HStack {
-                            Circle()
-                                .fill(token.isConnected ? Color.green : Color.red)
-                                .frame(width: 12, height: 12)
+                            // Checkbox for token activation
+                            Button(action: {
+                                // Only allow toggling if token is connected
+                                if token.isConnected {
+                                    tokenManager.toggleTokenActivation(token: token)
+                                }
+                            }) {
+                                Image(systemName: token.isActivated ? "checkmark.square.fill" : "square")
+                                    .foregroundColor(token.isConnected ? .blue : .gray)
+                                    .imageScale(.large)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .disabled(!token.isConnected)
                             
+                            // Token details and edit button
                             Button(action: {
                                 tokenToEdit = token
                                 showingAddToken = true
                             }) {
                                 Text(token.name)
                                     .font(.headline)
-                                    #if os(iOS)
                                     .foregroundColor(.white)
                                     .padding()
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(Color.gray.opacity(0.2))
+                                    .background(token.isConnected ? Color.green.opacity(0.7) : Color.red.opacity(0.7))
                                     .cornerRadius(8)
-                                    #else
-                                    .foregroundColor(.primary)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    #endif
                             }
                             .buttonStyle(PlainButtonStyle())
                             
+                            // Delete button
                             Button(action: {
                                 tokenToDelete = token
                                 showingDeleteConfirmation = true
@@ -90,11 +95,7 @@ struct TokenView: View {
                         }
                     }
                 }
-                #if os(iOS)
                 .listStyle(PlainListStyle())
-                #else
-                .listStyle(InsetListStyle())
-                #endif
             }
             
             // Add Token Button (different style per platform)
@@ -106,7 +107,6 @@ struct TokenView: View {
                         tokenToEdit = nil
                         showingAddToken = true
                     }) {
-                        #if os(iOS)
                         // iOS floating button style
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 50))
@@ -114,17 +114,6 @@ struct TokenView: View {
                             .shadow(radius: 5)
                             .padding(.trailing, 25)
                             .padding(.bottom, 25)
-                        #else
-                        // macOS button style
-                        Image(systemName: "plus")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                            .frame(width: 40, height: 40)
-                            .background(Color.blue)
-                            .clipShape(Circle())
-                            .padding(.trailing, 16)
-                            .padding(.bottom, 16)
-                        #endif
                     }
                 }
             }
@@ -144,5 +133,29 @@ struct TokenView: View {
                 }
             )
         }
+    }
+    
+    private func exportTokens() {
+        TokenBackupManager.exportTokens { success in
+            if success {
+                showingExportSuccess = true
+            }
+        }
+    }
+    
+    private func importTokens() {
+        TokenBackupManager.importTokens { success in
+            if success {
+                showingImportSuccess = true
+            } else {
+                showingImportFailure = true
+            }
+        }
+    }
+}
+
+struct TokenView_Previews: PreviewProvider {
+    static var previews: some View {
+        TokenView(tokenManager: TokenService.shared.makePreviewManager())
     }
 }
