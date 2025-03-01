@@ -118,6 +118,8 @@ public struct NotionUpdateDatabaseRequest: Codable {
     }
 }
 
+// This is the updated version of NotionUpdateBlockRequest that should conform to Decodable
+
 public struct NotionUpdateBlockRequest: Codable {
     public let type: String?
     public let content: JSONAny?
@@ -131,7 +133,7 @@ public struct NotionUpdateBlockRequest: Codable {
     
     enum CodingKeys: String, CodingKey {
         case type, archived
-        // Dynamic keys for content based on block type
+        // Dynamic keys for block content
         case paragraph, heading_1, heading_2, heading_3, callout, quote,
              bulleted_list_item, numbered_list_item, to_do, toggle, code,
              embed, image, video, file, pdf, bookmark, equation, divider,
@@ -215,8 +217,86 @@ public struct NotionUpdateBlockRequest: Codable {
             }
         }
     }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        type = try container.decodeIfPresent(String.self, forKey: .type)
+        archived = try container.decodeIfPresent(Bool.self, forKey: .archived)
+        
+        // Try to determine content type from available containers
+        if let type = type {
+            switch type {
+            case "paragraph":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .paragraph)
+            case "heading_1":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .heading_1)
+            case "heading_2":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .heading_2)
+            case "heading_3":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .heading_3)
+            case "callout":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .callout)
+            case "quote":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .quote)
+            case "bulleted_list_item":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .bulleted_list_item)
+            case "numbered_list_item":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .numbered_list_item)
+            case "to_do":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .to_do)
+            case "toggle":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .toggle)
+            case "code":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .code)
+            case "embed":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .embed)
+            case "image":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .image)
+            case "video":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .video)
+            case "file":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .file)
+            case "pdf":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .pdf)
+            case "bookmark":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .bookmark)
+            case "equation":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .equation)
+            case "divider":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .divider)
+            case "table_of_contents":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .table_of_contents)
+            case "breadcrumb":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .breadcrumb)
+            case "column_list":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .column_list)
+            case "column":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .column)
+            case "link_preview":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .link_preview)
+            case "synced_block":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .synced_block)
+            case "template":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .template)
+            case "link_to_page":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .link_to_page)
+            case "table":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .table)
+            case "table_row":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .table_row)
+            case "child_page":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .child_page)
+            case "child_database":
+                content = try container.decodeIfPresent(JSONAny.self, forKey: .child_database)
+            default:
+                content = nil
+            }
+        } else {
+            content = nil
+        }
+    }
 }
-
 public struct NotionAppendBlockChildrenRequest: Codable {
     public let children: [NotionBlock]
     public let after: String?

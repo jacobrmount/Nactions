@@ -12,9 +12,9 @@ public final class TaskDataController {
     // MARK: - Fetch Operations
     
     /// Fetches all tasks
-    public func fetchTasks() -> [CoreData.TaskEntity] {
+    public func fetchTasks() -> [TaskEntity] {
         let context = CoreDataStack.shared.viewContext
-        let request: NSFetchRequest<CoreData.TaskEntity> = CoreData.TaskEntity.fetchRequest()
+        let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         request.sortDescriptors = [
             NSSortDescriptor(key: "isCompleted", ascending: true),
             NSSortDescriptor(key: "dueDate", ascending: true)
@@ -29,9 +29,9 @@ public final class TaskDataController {
     }
     
     /// Fetches tasks for a specific database
-    public func fetchTasks(for databaseID: String) -> [CoreData.TaskEntity] {
+    public func fetchTasks(for databaseID: String) -> [TaskEntity] {
         let context = CoreDataStack.shared.viewContext
-        let request: NSFetchRequest<CoreData.TaskEntity> = CoreData.TaskEntity.fetchRequest()
+        let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         request.predicate = NSPredicate(format: "databaseID == %@", databaseID)
         request.sortDescriptors = [
             NSSortDescriptor(key: "isCompleted", ascending: true),
@@ -47,9 +47,9 @@ public final class TaskDataController {
     }
     
     /// Fetches tasks for a specific token
-    public func fetchTasks(for tokenID: UUID) -> [CoreData.TaskEntity] {
+    public func fetchTasks(for tokenID: UUID) -> [TaskEntity] {
         let context = CoreDataStack.shared.viewContext
-        let request: NSFetchRequest<CoreData.TaskEntity> = CoreData.TaskEntity.fetchRequest()
+        let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         request.predicate = NSPredicate(format: "tokenID == %@", tokenID as CVarArg)
         request.sortDescriptors = [
             NSSortDescriptor(key: "isCompleted", ascending: true),
@@ -71,9 +71,9 @@ public final class TaskDataController {
     }
     
     /// Fetches a specific task by ID
-    public func fetchTask(id: String) -> CoreData.TaskEntity? {
+    public func fetchTask(id: String) -> TaskEntity? {
         let context = CoreDataStack.shared.viewContext
-        let request: NSFetchRequest<CoreData.TaskEntity> = CoreData.TaskEntity.fetchRequest()
+        let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", id)
         request.fetchLimit = 1
         
@@ -88,11 +88,11 @@ public final class TaskDataController {
     // MARK: - Create/Update Operations
     
     /// Creates or updates a task from a TaskItem model
-    public func saveTask(from taskItem: TaskItem, databaseID: String, pageID: String, tokenID: UUID) -> CoreData.TaskEntity? {
+    public func saveTask(from taskItem: TaskItem, databaseID: String, pageID: String, tokenID: UUID) -> TaskEntity? {
         let context = CoreDataStack.shared.viewContext
         
         // Check if the task already exists
-        let request: NSFetchRequest<CoreData.TaskEntity> = CoreData.TaskEntity.fetchRequest()
+        let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", taskItem.id)
         
         do {
@@ -105,7 +105,7 @@ public final class TaskDataController {
                 return existingTask
             } else {
                 // Create new task
-                let newTask = CoreData.TaskEntity.create(
+                let newTask = TaskEntity.create(
                     from: taskItem,
                     databaseID: databaseID,
                     pageID: pageID,
@@ -127,7 +127,7 @@ public final class TaskDataController {
         
         for taskItem in taskItems {
             // Create or update task
-            let request: NSFetchRequest<CoreData.TaskEntity> = CoreData.TaskEntity.fetchRequest()
+            let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
             request.predicate = NSPredicate(format: "id == %@", taskItem.id)
             
             do {
@@ -138,7 +138,7 @@ public final class TaskDataController {
                     existingTask.update(from: taskItem)
                 } else {
                     // Create new task
-                    _ = CoreData.TaskEntity.create(
+                    _ = TaskEntity.create(
                         from: taskItem,
                         databaseID: databaseID,
                         pageID: taskItem.id, // Assuming page ID is the same as task ID
@@ -161,7 +161,7 @@ public final class TaskDataController {
     /// Updates a task's completion status
     public func updateTaskCompletion(taskID: String, isCompleted: Bool) {
         let context = CoreDataStack.shared.viewContext
-        let request: NSFetchRequest<CoreData.TaskEntity> = CoreData.TaskEntity.fetchRequest()
+        let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", taskID)
         
         do {
@@ -182,7 +182,7 @@ public final class TaskDataController {
     /// Deletes all tasks for a specific database
     public func deleteTasks(for databaseID: String) {
         let context = CoreDataStack.shared.viewContext
-        let request: NSFetchRequest<CoreData.TaskEntity> = CoreData.TaskEntity.fetchRequest()
+        let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         request.predicate = NSPredicate(format: "databaseID == %@", databaseID)
         
         do {
@@ -200,7 +200,7 @@ public final class TaskDataController {
     /// Deletes all tasks for a specific token
     public func deleteTasks(for tokenID: UUID) {
         let context = CoreDataStack.shared.viewContext
-        let request: NSFetchRequest<CoreData.TaskEntity> = CoreData.TaskEntity.fetchRequest()
+        let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         request.predicate = NSPredicate(format: "tokenID == %@", tokenID as CVarArg)
         
         do {
@@ -218,7 +218,7 @@ public final class TaskDataController {
     /// Deletes a specific task
     public func deleteTask(id: String) {
         let context = CoreDataStack.shared.viewContext
-        let request: NSFetchRequest<CoreData.TaskEntity> = CoreData.TaskEntity.fetchRequest()
+        let request: NSFetchRequest<TaskEntity> = TaskEntity.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", id)
         
         do {

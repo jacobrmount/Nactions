@@ -1,28 +1,37 @@
-// DataManagement/CoreDataStack.swift
+// NactionsKit/DataManagement/CoreDataStack.swift
 import Foundation
 import CoreData
 
 /// Manages Core Data operations and shared context
 public final class CoreDataStack {
-    /// The shared singleton instance
     public static let shared = CoreDataStack()
     
-    /// The persistent container for the Core Data stack
+    // Core Data stack for the main application
     public let persistentContainer: NSPersistentContainer
     
-    /// The main view context for UI operations
+    // The main context for UI operations
     public var viewContext: NSManagedObjectContext {
-        persistentContainer.viewContext
+        return persistentContainer.viewContext
     }
     
-    /// A background context for operations that don't need to update the UI
-    public var backgroundContext: NSManagedObjectContext {
-        let context = persistentContainer.newBackgroundContext()
-        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
-        return context
+    // Check if the context has access to the model
+    public func verifyModelAccess() {
+        let entityNames = persistentContainer.managedObjectModel.entities.map { $0.name ?? "unnamed" }
+        print("Available entities in model: \(entityNames)")
+        
+        // Check if TokenEntity exists
+        if entityNames.contains("TokenEntity") {
+            print("✅ TokenEntity found in model")
+        } else {
+            print("❌ TokenEntity NOT found in model")
+        }
     }
     
     private init() {
+        // Add debugging info to identify the model URLs
+        let modelURL = Bundle.main.url(forResource: "NactionsDataModel", withExtension: "momd")
+        print("Looking for data model at: \(String(describing: modelURL))")
+        
         // Initialize the persistent container with our data model
         persistentContainer = NSPersistentContainer(name: "NactionsDataModel")
         
@@ -33,13 +42,32 @@ public final class CoreDataStack {
             description.shouldMigrateStoreAutomatically = true
             description.shouldInferMappingModelAutomatically = true
             persistentContainer.persistentStoreDescriptions = [description]
+            
+            // Print for debugging
+            print("Using Core Data store at: \(storeURL.path)")
+        } else {
+            print("⚠️ Failed to get app group container URL")
         }
         
         // Load the persistent stores
         persistentContainer.loadPersistentStores { storeDescription, error in
             if let error = error as NSError? {
-                // This is a severe error that prevents the app from functioning correctly
-                fatalError("Failed to load persistent stores: \(error), \(error.userInfo)")
+                // Detailed error logging
+                print("Failed to load persistent stores: \(error), \(error.userInfo)")
+                print("Model URL: \(String(describing: storeDescription.url))")
+                print("Model configuration: \(String(describing: storeDescription.configuration))")
+                
+                // Log all error userInfo keys to help diagnose
+                for (key, value) in error.userInfo {
+                    print("Error info - \(key): \(value)")
+                }
+                
+                // Don't crash in production
+                #if DEBUG
+                fatalError("Failed to load persistent stores: \(error)")
+                #endif
+            } else {
+                print("✅ Successfully loaded persistent store: \(storeDescription.url?.path ?? "unknown")")
             }
         }
         

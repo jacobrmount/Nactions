@@ -143,10 +143,28 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Presentation/SettingsView.swift,
 			);
 			target = 42BAE9B52D7062F700E90D94 /* Nactions */;
 		};
+		42D8453A2D74CF7B0076DF73 /* Exceptions for "NactionsKit" folder in "NactionsWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				DataManagement/NactionsDataModel.xcdatamodeld,
+			);
+			target = 4289FCF42D70DF8500EC2762 /* NactionsWidgetsExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		42B018502D74E58C00BB1AAF /* Exceptions for "NactionsKit" folder in "Copy Bundle Resources" phase from "Nactions" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 42BAE9B42D7062F700E90D94 /* Resources */;
+			membershipExceptions = (
+				DataManagement/NactionsDataModel.xcdatamodeld,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4289FCFB2D70DF8500EC2762 /* NactionsWidgets */ = {
@@ -165,6 +183,8 @@
 		4289FD672D70F20E00EC2762 /* NactionsKit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				42B018502D74E58C00BB1AAF /* Exceptions for "NactionsKit" folder in "Copy Bundle Resources" phase from "Nactions" target */,
+				42D8453A2D74CF7B0076DF73 /* Exceptions for "NactionsKit" folder in "NactionsWidgetsExtension" target */,
 				4289FD7E2D70F20E00EC2762 /* Exceptions for "NactionsKit" folder in "NactionsKit" target */,
 			);
 			path = NactionsKit;
@@ -986,6 +1006,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
+				MOMC_SUPPRESS_WARNINGS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = jmount.Nactions;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -1028,6 +1049,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
+				MOMC_SUPPRESS_WARNINGS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = jmount.Nactions;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;

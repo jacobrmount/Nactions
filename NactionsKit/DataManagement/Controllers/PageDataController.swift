@@ -46,16 +46,18 @@ public final class PageDataController {
         let pages = fetchPages(for: databaseID)
         
         return pages.compactMap { page -> TaskItem? in
-            // Add the extension method to safely access properties
-            let statusProperty = page.getProperty(whereNameContains: ["status", "complete", "done"])
-            let isCompleted = false // Default value
+            // Make sure we have a valid ID
+            guard let pageId = page.id else {
+                return nil
+            }
             
-            // Find due date property
-            let dueDateProperty = page.getProperty(whereNameContains: ["due", "date"])
-            let dueDate: Date? = nil // Default value
+            // We don't need these values directly, just get the properties
+            // and let the PageEntity.extractCompletionStatus() and extractDueDate() methods do the work
+            let isCompleted = page.extractCompletionStatus()
+            let dueDate = page.extractDueDate()
             
             return TaskItem(
-                id: page.id,
+                id: pageId,
                 title: page.title ?? "Untitled",
                 isCompleted: isCompleted,
                 dueDate: dueDate
@@ -93,8 +95,11 @@ public final class PageDataController {
                 
                 // Set title from properties
                 if let titleProperty = notionPage.properties?.first(where: { $0.key.lowercased().contains("title") }) {
-                    if let titleValue = titleProperty.value.value as? [Any],
-                       let firstTitle = titleValue.first as? [String: Any],
+                    // Use extension method instead of direct casting
+                    if let titleDict = titleProperty.value.value.getValueDictionary(),
+                       let titleArray = titleDict["title"] as? [[String: Any]],
+                       !titleArray.isEmpty,
+                       let firstTitle = titleArray.first,
                        let text = firstTitle["text"] as? [String: Any],
                        let content = text["content"] as? String {
                         newPage.title = content
@@ -157,8 +162,11 @@ public final class PageDataController {
         
         // Update title from properties
         if let titleProperty = notionPage.properties?.first(where: { $0.key.lowercased().contains("title") }) {
-            if let titleValue = titleProperty.value.value as? [Any],
-               let firstTitle = titleValue.first as? [String: Any],
+            // Use extension method instead of direct casting
+            if let titleDict = titleProperty.value.value.getValueDictionary(),
+               let titleArray = titleDict["title"] as? [[String: Any]],
+               !titleArray.isEmpty,
+               let firstTitle = titleArray.first,
                let text = firstTitle["text"] as? [String: Any],
                let content = text["content"] as? String {
                 page.title = content

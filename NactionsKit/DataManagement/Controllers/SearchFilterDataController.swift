@@ -7,9 +7,9 @@ public final class SearchFilterDataController {
     
     private init() {}
     
-    public func saveSearchFilter(_ filter: NotionSearchFilter) -> CoreData.SearchFilterEntity? {
+    public func saveSearchFilter(_ filter: NotionSearchFilter) -> SearchFilterEntity? {
         let context = CoreDataStack.shared.viewContext
-        let entity = CoreData.SearchFilterEntity.create(from: filter, in: context)
+        let entity = SearchFilterEntity.create(from: filter, in: context)
         
         do {
             try context.save()
@@ -20,9 +20,9 @@ public final class SearchFilterDataController {
         }
     }
     
-    public func fetchSearchFilter(property: String, value: String) -> CoreData.SearchFilterEntity? {
+    public func fetchSearchFilter(property: String, value: String) -> SearchFilterEntity? {
         let context = CoreDataStack.shared.viewContext
-        let request: NSFetchRequest<CoreData.SearchFilterEntity> = CoreData.SearchFilterEntity.fetchRequest()
+        let request = NSFetchRequest<SearchFilterEntity>(entityName: "SearchFilterEntity")
         request.predicate = NSPredicate(format: "property == %@ AND value == %@", property, value)
         request.fetchLimit = 1
         

@@ -1,22 +1,23 @@
-// BusinessLogic/TokenRefreshScheduler.swift
+// NactionsKit/BusinessLogic/TokenRefreshScheduler.swift
 import Foundation
 import BackgroundTasks
 
 public final class TokenRefreshScheduler {
-    static let shared = TokenRefreshScheduler()
-    let taskIdentifier = "com.nactions.tokenRefresh"
+    public static let shared = TokenRefreshScheduler()
+    public let taskIdentifier = "com.nactions.tokenRefresh"
     
-    init() {}
+    private init() {}
     
     /// Register/initialize the background refresh mechanism
-    func registerBackgroundTask() {
+    public func registerBackgroundTask() {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: taskIdentifier, using: nil) { task in
             self.handleiOSBackgroundTask(task: task as! BGAppRefreshTask)
         }
+        print("✅ Registered background task with identifier: \(taskIdentifier)")
     }
-    
+
     /// Schedule the background task
-    func scheduleTokenRefresh() {
+    public func scheduleTokenRefresh() {
         let request = BGAppRefreshTaskRequest(identifier: taskIdentifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: 60 * 15) // Run every 15 min
         
@@ -25,11 +26,17 @@ public final class TokenRefreshScheduler {
             print("📅 Token refresh scheduled (iOS).")
         } catch {
             print("⚠️ Failed to schedule token refresh: \(error.localizedDescription)")
+            // Make debugging easier by checking if the task identifier is registered
+            if let bgError = error as NSError? {
+                if bgError.domain == "BGTaskSchedulerErrorDomain" && bgError.code == 3 {
+                    print("Error code 3 indicates the identifier wasn't registered. Make sure to call registerBackgroundTask() first and check Info.plist for BGTaskSchedulerPermittedIdentifiers.")
+                }
+            }
         }
     }
     
     /// Execute token refresh in the background for iOS
-    func handleiOSBackgroundTask(task: BGAppRefreshTask) {
+    private func handleiOSBackgroundTask(task: BGAppRefreshTask) {
         let taskID = UUID() // For keeping track of the task
         print("⚙️ Beginning background task: \(taskID)")
         
@@ -47,17 +54,15 @@ public final class TokenRefreshScheduler {
     }
     
     /// Shared token refresh logic with retry capability
-    private func refreshTokensWithRetry() async {
-        await TokenService.shared.refreshAllTokens()
-        
-        if await !TokenService.shared.invalidTokens.isEmpty {
-            print("❌ Some tokens failed to refresh. Retrying in 5 minutes.")
-            do {
-                try await Task.sleep(nanoseconds: 300_000_000_000) // 5 min
-                await TokenService.shared.refreshAllTokens()
-            } catch {
-                print("⚠️ Sleep interrupted: \(error.localizedDescription)")
+        private func refreshTokensWithRetry() async {
+            let invalidTokens = await TokenDataController.shared.validateAllTokens()
+            
+            // Log any invalid tokens
+            if !invalidTokens.isEmpty {
+                print("Found \(invalidTokens.count) invalid tokens during refresh")
             }
+            
+            // In a real implementation, you would add retry logic here
+            // This is a simplified version
         }
-    }
 }

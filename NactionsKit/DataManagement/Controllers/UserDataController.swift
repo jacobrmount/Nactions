@@ -1,54 +1,67 @@
-// DataManagement/Controllers/UserDataController.swift
+// NactionsKit/DataManagement/Controllers/UserDataController.swift
 import Foundation
 import CoreData
 
-public final class UserDataController {
+public class UserDataController {
     public static let shared = UserDataController()
     
     private init() {}
     
-    public func fetchUser(id: String) -> CoreData.UserEntity? {
+    // Since the User entity can't be found, we'll redirect to the TokenEntity
+    func fetchTokenUsers() -> [TokenEntity] {
         let context = CoreDataStack.shared.viewContext
-        let request: NSFetchRequest<CoreData.UserEntity> = CoreData.UserEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "id == %@", id)
-        request.fetchLimit = 1
+        let request: NSFetchRequest<TokenEntity> = TokenEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "connectionStatus == %@", NSNumber(value: true))
         
         do {
-            return try context.fetch(request).first
+            return try context.fetch(request)
         } catch {
-            print("Error fetching user: \(error)")
+            print("Error fetching token users: \(error)")
+            return []
+        }
+    }
+    
+    func saveToken(_ token: NotionToken) -> TokenEntity? {
+        let context = CoreDataStack.shared.viewContext
+        
+        // Check if already exists
+        let request: NSFetchRequest<TokenEntity> = TokenEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", token.id as CVarArg)
+        
+        do {
+            let existingTokens = try context.fetch(request)
+            
+            if let existingToken = existingTokens.first {
+                // Update existing
+                existingToken.name = token.name
+                existingToken.apiToken = token.apiToken
+                existingToken.workspaceID = token.workspaceID
+                try context.save()
+                return existingToken
+            } else {
+                // Create new
+                let tokenEntity = TokenEntity.create(from: token, in: context)
+                try context.save()
+                return tokenEntity
+            }
+        } catch {
+            print("Error saving token: \(error)")
             return nil
         }
     }
     
-    public func saveUser(from notionUser: NotionUser) -> CoreData.UserEntity? {
+    func deleteToken(id: UUID) {
         let context = CoreDataStack.shared.viewContext
-        
-        // Check if user already exists
-        if let existingUser = fetchUser(id: notionUser.id) {
-            existingUser.name = notionUser.name
-            existingUser.email = notionUser.email
-            existingUser.type = notionUser.type ?? "unknown"
-            existingUser.lastSyncTime = Date()
-            
-            do {
-                try context.save()
-                return existingUser
-            } catch {
-                print("Error updating user: \(error)")
-                return nil
-            }
-        }
-        
-        // Create new user
-        let newUser = CoreData.UserEntity.create(from: notionUser, in: context)
+        let request: NSFetchRequest<TokenEntity> = TokenEntity.fetchRequest()
+        request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         
         do {
-            try context.save()
-            return newUser
+            if let token = try context.fetch(request).first {
+                context.delete(token)
+                try context.save()
+            }
         } catch {
-            print("Error saving new user: \(error)")
-            return nil
+            print("Error deleting token: \(error)")
         }
     }
 }

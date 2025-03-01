@@ -1,5 +1,6 @@
 // Nactions/Presentation/TokenPickerView.swift
 import SwiftUI
+import NactionsKit
 
 struct TokenPickerView: View {
     @ObservedObject var tokenManager: TokenService
@@ -26,7 +27,7 @@ struct TokenPickerView: View {
             }
             .navigationTitle("Select Token")
             .task {
-                await tokenManager.validateStoredTokens()
+                await tokenManager.refreshAllTokens()
             }
         }
     }

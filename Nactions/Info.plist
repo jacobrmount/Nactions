@@ -13,5 +13,9 @@
 		<string>TaskWidgetConfigurationIntent</string>
 		<string>ProgressWidgetConfigurationIntent</string>
 	</array>
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>com.nactions.tokenRefresh</string>
+    </array>
 </dict>
 </plist>

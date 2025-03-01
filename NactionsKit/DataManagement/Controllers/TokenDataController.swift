@@ -1,251 +1,324 @@
-// DataManagement/Controllers/TokenDataController.swift
+// NactionsKit/DataManagement/Controllers/TokenDataController.swift
 import Foundation
 import CoreData
-import Combine
+import Security
 
-/// Manages all token-related Core Data operations
+/// Manages all token-related data operations including secure storage
 public final class TokenDataController {
     /// The shared singleton instance
     public static let shared = TokenDataController()
+    
+    // Key constants
+    public let tokenServiceName = "com.nactions.tokens"
     
     private init() {}
     
     // MARK: - Fetch Operations
     
     /// Fetches all stored tokens
-    public func fetchTokens() -> [TokenEntity] {
+    public func fetchTokens() -> [NotionToken] {
         let context = CoreDataStack.shared.viewContext
-        let request = NSFetchRequest<TokenEntity>(entityName: "TokenEntity")
+        let request: NSFetchRequest<TokenEntity> = TokenEntity.fetchRequest()
         request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
         
         do {
-            return try context.fetch(request)
+            let tokenEntities = try context.fetch(request)
+            return tokenEntities.compactMap { entity -> NotionToken? in
+                guard let id = entity.id else {
+                    return nil
+                }
+                
+                // Get API token from keychain
+                let apiToken = getSecureToken(for: id.uuidString) ?? ""
+                
+                return NotionToken(
+                    id: id,
+                    name: entity.name ?? "",  // Unwrap optional
+                    apiToken: apiToken,
+                    isConnected: entity.connectionStatus,
+                    isActivated: entity.isActivated,
+                    workspaceID: entity.workspaceID,
+                    workspaceName: entity.workspaceName
+                )
+            }
         } catch {
             print("Error fetching tokens: \(error)")
             return []
         }
     }
     
-    /// Fetches tokens as lightweight NotionToken structs
-    public func fetchNotionTokens() -> [NotionToken] {
-        return fetchTokens().map { $0.toNotionToken() }
-    }
-    
-    /// Fetches activated tokens that are connected
-    public func fetchActivatedTokens() -> [TokenEntity] {
-        let context = CoreDataStack.shared.viewContext
-        let request = NSFetchRequest<TokenEntity>(entityName: "TokenEntity")
-        request.predicate = NSPredicate(format: "isActivated == true AND connectionStatus == true")
-        request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
-        
-        do {
-            return try context.fetch(request)
-        } catch {
-            print("Error fetching activated tokens: \(error)")
-            return []
-        }
-    }
-    
-    /// Fetches activated tokens as lightweight NotionToken structs
-    public func fetchActivatedNotionTokens() -> [NotionToken] {
-        return fetchActivatedTokens().map { $0.toNotionToken() }
-    }
-    
     /// Fetches a specific token by ID
     public func fetchToken(id: UUID) -> TokenEntity? {
         let context = CoreDataStack.shared.viewContext
-        let request = NSFetchRequest<TokenEntity>(entityName: "TokenEntity")
+        let request: NSFetchRequest<TokenEntity> = TokenEntity.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         request.fetchLimit = 1
         
         do {
-            return try context.fetch(request).first
+            let token = try context.fetch(request).first
+            return token
         } catch {
             print("Error fetching token with ID \(id): \(error)")
             return nil
         }
     }
     
-    // MARK: - Create/Update Operations
+    // MARK: - CRUD Operations
     
-    /// Saves a new token with the given name and API token
+    /// Saves a new token or updates an existing one
     @discardableResult
     public func saveToken(name: String, apiToken: String) -> TokenEntity? {
         let context = CoreDataStack.shared.viewContext
-        let newToken = TokenEntity(context: context)
-        newToken.id = UUID()
-        newToken.name = name
-        newToken.apiToken = apiToken
-        newToken.connectionStatus = false
-        newToken.isActivated = false
-        newToken.createdDate = Date()
-        newToken.lastUpdatedDate = Date()
+        
+        // Create a new token entity
+        let tokenEntity = TokenEntity(context: context)
+        tokenEntity.id = UUID()
+        tokenEntity.name = name
+        tokenEntity.connectionStatus = false
+        tokenEntity.isActivated = false
+        tokenEntity.lastValidated = Date()
+        
+        // Save the API token securely
+        storeSecureToken(apiToken, for: tokenEntity.id!.uuidString)
         
         do {
             try context.save()
-            return newToken
+            return tokenEntity
         } catch {
             print("Error saving token: \(error)")
             return nil
         }
     }
     
-    /// Updates an existing token with new values
-    public func updateToken(id: UUID, name: String, apiToken: String, isConnected: Bool, isActivated: Bool, workspaceInfo: (id: String, name: String)? = nil) {
+    /// Updates an existing token
+    public func updateToken(id: UUID, name: String? = nil, isConnected: Bool? = nil,
+                           isActivated: Bool? = nil, workspaceID: String? = nil,
+                           workspaceName: String? = nil, apiToken: String? = nil) {
         let context = CoreDataStack.shared.viewContext
-        let request = NSFetchRequest<TokenEntity>(entityName: "TokenEntity")
+        let request: NSFetchRequest<TokenEntity> = TokenEntity.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         
         do {
             if let token = try context.fetch(request).first {
-                token.name = name
-                token.apiToken = apiToken
-                token.connectionStatus = isConnected
-                token.isActivated = isActivated
-                token.lastUpdatedDate = Date()
+                if let name = name {
+                    token.name = name
+                }
                 
-                if let workspaceInfo = workspaceInfo {
-                    token.workspaceID = workspaceInfo.id
-                    token.workspaceName = workspaceInfo.name
+                if let isConnected = isConnected {
+                    token.connectionStatus = isConnected
+                }
+                
+                if let isActivated = isActivated {
+                    token.isActivated = isActivated
+                }
+                
+                if let workspaceID = workspaceID {
+                    token.workspaceID = workspaceID
+                }
+                
+                if let workspaceName = workspaceName {
+                    token.workspaceName = workspaceName
+                }
+                
+                token.lastValidated = Date()
+                
+                // Update API token if provided
+                if let apiToken = apiToken {
+                    storeSecureToken(apiToken, for: id.uuidString)
                 }
                 
                 try context.save()
             }
         } catch {
-            print("Error updating token with ID \(id): \(error)")
+            print("Error updating token: \(error)")
         }
     }
     
-    /// Updates a token from a NotionToken struct
-    public func updateToken(from notionToken: NotionToken) {
-        updateToken(
-            id: notionToken.id,
-            name: notionToken.name,
-            apiToken: notionToken.apiToken,
-            isConnected: notionToken.isConnected,
-            isActivated: notionToken.isActivated,
-            workspaceInfo: notionToken.workspaceID != nil && notionToken.workspaceName != nil ?
-                (notionToken.workspaceID!, notionToken.workspaceName!) : nil
-        )
-    }
-    
-    /// Toggle activation status for a token
-    public func toggleTokenActivation(tokenID: UUID, isActivated: Bool) {
-        let context = CoreDataStack.shared.viewContext
-        let request = NSFetchRequest<TokenEntity>(entityName: "TokenEntity")
-        request.predicate = NSPredicate(format: "id == %@", tokenID as CVarArg)
-        
-        do {
-            if let token = try context.fetch(request).first {
-                // Only allow activating connected tokens
-                if isActivated && !token.connectionStatus {
-                    print("Cannot activate disconnected token")
-                    return
-                }
-                
-                token.isActivated = isActivated
-                try context.save()
-                print("Token activation status updated to: \(isActivated)")
-            } else {
-                print("Token with ID \(tokenID) not found for activation update")
-            }
-        } catch {
-            print("Error updating token activation: \(error)")
-        }
-    }
-    
-    // MARK: - Delete Operations
-    
-    /// Deletes a token by ID
+    /// Deletes a token
     public func deleteToken(id: UUID) {
         let context = CoreDataStack.shared.viewContext
-        let request = NSFetchRequest<TokenEntity>(entityName: "TokenEntity")
+        let request: NSFetchRequest<TokenEntity> = TokenEntity.fetchRequest()
         request.predicate = NSPredicate(format: "id == %@", id as CVarArg)
         
         do {
             if let token = try context.fetch(request).first {
+                // Remove the API token from keychain
+                removeSecureToken(for: id.uuidString)
+                
+                // Delete the entity
                 context.delete(token)
                 try context.save()
-                print("Token deleted successfully")
-            } else {
-                print("Token with ID \(id) not found for deletion")
             }
         } catch {
             print("Error deleting token: \(error)")
         }
     }
     
-    /// Deletes a token from a NotionToken struct
-    public func deleteToken(_ token: NotionToken) {
-        deleteToken(id: token.id)
+    // MARK: - Token Validation
+    
+    /// Validates a token with the Notion API
+    public func validateToken(_ token: NotionToken) async -> Bool {
+        do {
+            let client = token.createAPIClient()
+            let _ = try await client.retrieveBotUser()
+            
+            // Update token status
+            updateToken(
+                id: token.id,
+                name: token.name,  // Added name parameter
+                isConnected: true,
+                isActivated: token.isActivated
+            )
+            
+            return true
+        } catch {
+            // Update token status
+            updateToken(
+                id: token.id,
+                name: token.name,  // Added name parameter
+                isConnected: false,
+                isActivated: false
+            )
+            
+            print("Token validation failed: \(error)")
+            return false
+        }
     }
     
-    // MARK: - Batch Operations
+    /// Validates all stored tokens
+    public func validateAllTokens() async -> [UUID] {
+        let tokens = fetchTokens()
+        var invalidTokenIDs: [UUID] = []
+        
+        for token in tokens {
+            let isValid = await validateToken(token)
+            if !isValid {
+                invalidTokenIDs.append(token.id)
+            }
+        }
+        
+        return invalidTokenIDs
+    }
     
-    /// Updates connection status for multiple tokens
-    public func updateConnectionStatus(for tokens: [TokenEntity], status: Bool) {
-        let context = CoreDataStack.shared.viewContext
-        let tokenIDs = tokens.compactMap { $0.id }
-        let request = NSFetchRequest<TokenEntity>(entityName: "TokenEntity")
-        request.predicate = NSPredicate(format: "id IN %@", tokenIDs)
+    // MARK: - Keychain Operations
+    
+    /// Stores a token securely in the keychain
+    public func storeSecureToken(_ token: String, for identifier: String) {
+        let keychainItem = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: tokenServiceName,
+            kSecAttrAccount as String: identifier,
+            kSecValueData as String: token.data(using: .utf8)!,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+        ] as [String: Any]
+        
+        // First, delete any existing item
+        SecItemDelete(keychainItem as CFDictionary)
+        
+        // Then add the new item
+        let status = SecItemAdd(keychainItem as CFDictionary, nil)
+        if status != errSecSuccess {
+            print("Error storing token in keychain: \(status)")
+        }
+    }
+    
+    /// Retrieves a token from the keychain
+    public func getSecureToken(for identifier: String) -> String? {
+        let query = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: tokenServiceName,
+            kSecAttrAccount as String: identifier,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ] as [String: Any]
+        
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        
+        guard status == errSecSuccess,
+              let data = item as? Data,
+              let token = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        
+        return token
+    }
+    
+    /// Removes a token from the keychain
+    public func removeSecureToken(for identifier: String) {
+        let query = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: tokenServiceName,
+            kSecAttrAccount as String: identifier
+        ] as [String: Any]
+        
+        SecItemDelete(query as CFDictionary)
+    }
+    
+    // MARK: - Export/Import
+    
+    /// Exports tokens to a secure format (for backup)
+    public func exportTokens() -> Data? {
+        let tokens = fetchTokens()
+        
+        // Create a secure representation for export
+        let tokenExports = tokens.map { token -> [String: Any] in
+            return [
+                "id": token.id.uuidString,
+                "name": token.name,
+                "apiToken": token.apiToken,
+                "workspaceID": token.workspaceID ?? "",
+                "workspaceName": token.workspaceName ?? ""
+            ]
+        }
         
         do {
-            let tokensToUpdate = try context.fetch(request)
-            for token in tokensToUpdate {
-                token.connectionStatus = status
-                
-                // If disconnected, also deactivate
-                if !status && token.isActivated {
-                    token.isActivated = false
-                }
-            }
-            
-            try context.save()
+            let data = try JSONSerialization.data(withJSONObject: tokenExports, options: [.prettyPrinted])
+            return data
         } catch {
-            print("Error updating connection status: \(error)")
+            print("Error exporting tokens: \(error)")
+            return nil
         }
     }
     
     /// Imports tokens from a backup
-    public func importTokens(_ tokens: [NotionToken]) {
-        let context = CoreDataStack.shared.viewContext
-        
-        for tokenModel in tokens {
-            // Check if token with this ID already exists
-            let request = NSFetchRequest<TokenEntity>(entityName: "TokenEntity")
-            request.predicate = NSPredicate(format: "id == %@", tokenModel.id as CVarArg)
+    public func importTokens(from data: Data) -> Bool {
+        do {
+            guard let tokenImports = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+                return false
+            }
             
-            do {
-                let existingTokens = try context.fetch(request)
+            for tokenData in tokenImports {
+                guard let idString = tokenData["id"] as? String,
+                      let name = tokenData["name"] as? String,
+                      let apiToken = tokenData["apiToken"] as? String else {
+                    continue
+                }
                 
-                if let existingToken = existingTokens.first {
+                let workspaceID = tokenData["workspaceID"] as? String
+                let workspaceName = tokenData["workspaceName"] as? String
+                
+                // Create a new token or update existing one
+                if let id = UUID(uuidString: idString),
+                   fetchToken(id: id) != nil {
                     // Update existing token
-                    existingToken.name = tokenModel.name
-                    existingToken.apiToken = tokenModel.apiToken
-                    existingToken.connectionStatus = false // Force validation on import
-                    existingToken.isActivated = false // Force reactivation on import
-                    existingToken.lastUpdatedDate = Date()
+                    updateToken(
+                        id: id,
+                        name: name,
+                        workspaceID: workspaceID,
+                        workspaceName: workspaceName,
+                        apiToken: apiToken
+                    )
                 } else {
                     // Create new token
-                    let newToken = TokenEntity(context: context)
-                    newToken.id = tokenModel.id
-                    newToken.name = tokenModel.name
-                    newToken.apiToken = tokenModel.apiToken
-                    newToken.connectionStatus = false
-                    newToken.isActivated = false
-                    newToken.createdDate = Date()
-                    newToken.lastUpdatedDate = Date()
+                    let _ = saveToken(name: name, apiToken: apiToken)
                 }
-            } catch {
-                print("Error importing token: \(error)")
             }
-        }
-        
-        do {
-            try context.save()
-            print("Tokens imported successfully")
+            
+            return true
         } catch {
-            print("Error saving imported tokens: \(error)")
+            print("Error importing tokens: \(error)")
+            return false
         }
     }
 }

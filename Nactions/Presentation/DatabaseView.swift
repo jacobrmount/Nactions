@@ -1,5 +1,6 @@
 // Nactions/Presentation/DatabaseView.swift
 import SwiftUI
+import NactionsKit
 
 struct DatabaseView: View {
     @ObservedObject var databaseService = DatabaseService.shared
@@ -127,13 +128,24 @@ struct DatabaseView: View {
         }
     }
     
+    private func convertToViewModel(_ internal: DatabaseViewModelInternal) -> DatabaseViewModel {
+        return DatabaseViewModel(
+            id: `internal`.id,
+            title: `internal`.title,
+            tokenID: `internal`.tokenID,
+            tokenName: `internal`.tokenName,
+            isSelected: `internal`.isSelected,
+            lastUpdated: `internal`.lastUpdated
+        )
+    }
+    
     // Main database list
     private var databaseListView: some View {
         List {
             ForEach(databaseService.databaseGroups) { group in
                 Section(header: Text(group.tokenName)) {
                     ForEach(group.databases) { database in
-                        DatabaseRowView(database: database) {
+                        DatabaseRowView(database: convertToViewModel(database)) {
                             // Toggle selection when tapped
                             databaseService.toggleDatabaseSelection(
                                 databaseID: database.id,

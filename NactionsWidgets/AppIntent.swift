@@ -1,10 +1,4 @@
-//
-//  AppIntent.swift
-//  NactionsWidgets
-//
-//  Created by Jacob Mount on 2/27/25.
-//
-
+// NactionsWidgets/AppIntent.swift
 import WidgetKit
 import AppIntents
 

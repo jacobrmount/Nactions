@@ -44,6 +44,16 @@ struct ProgressWidget: Widget {
 // MARK: - Widget Bundle
 @main
 struct NactionsWidgetsBundle: WidgetBundle {
+    init() {
+        // Verify app group access on launch
+        let groupAccessSuccessful = AppGroupConfig.verifyAppGroupAccess()
+        if !groupAccessSuccessful {
+            print("⚠️ Failed to access app group - widgets may not work correctly")
+        } else {
+            print("✅ App group access successful in widget bundle")
+        }
+    }
+    
     var body: some Widget {
         TaskListWidget()
         ProgressWidget()
