@@ -152,14 +152,3 @@ extension NotionAPIClient {
         }
     }
 }
-
-// Keep the extension from NotionSearchFilter but remove the dictionary property
-// It's now renamed to dictionaryRepresentation in the NotionAPIModels.swift file
-extension NotionSearchSort {
-    var dictionary: [String: Any] {
-        return [
-            "property": property,
-            "direction": direction
-        ]
-    }
-}

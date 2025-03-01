@@ -1,9 +1,9 @@
-// NactionsWidgets/Models/WidgetDataModel.swift
-import Foundation
+// NactionsWidgets/Models/SharedWidgetModels.swift
 import WidgetKit
+import Foundation
 import NactionsKit
 
-// MARK: - Provider Models
+// MARK: - Shared Widget Entry Models
 struct TaskEntry: TimelineEntry {
     let date: Date
     let configuration: TaskWidgetConfigurationIntent

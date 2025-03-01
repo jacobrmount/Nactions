@@ -1,4 +1,4 @@
-// NactionsKit.swift
+// NactionsKit/NactionsKit.swift
 import Foundation
 
 // MARK: - Widget Data Models
@@ -16,8 +16,6 @@ public struct TaskItem: Identifiable, Hashable, Codable {
         self.isCompleted = isCompleted
         self.dueDate = dueDate
     }
-    
-    // Codable conformance is already inherited from the protocol
     
     // Used for previews and placeholders
     public static var samples: [TaskItem] {
@@ -44,28 +42,13 @@ public struct ProgressData: Codable {
         self.percentComplete = targetValue > 0 ? min(1.0, currentValue / targetValue) : 0.0
     }
     
-    // Codable conformance is already inherited from the protocol
-    
     // Used for previews and placeholders
     public static var sample: ProgressData {
         ProgressData(title: "Project Completion", currentValue: 65, targetValue: 100)
     }
 }
 
-/// Token entity for widget configuration
-public struct TokenEntity: Codable, Identifiable {
-    public var id: String
-    public var name: String
-    
-    public init(id: String, name: String) {
-        self.id = id
-        self.name = name
-    }
-}
-
-// MARK: - Helper Structures for Widget Cache
-
-/// Generic structure to hold cached data with a timestamp
+/// Cached data
 public struct CachedData<T: Codable>: Codable {
     public let timestamp: Date
     public let data: T

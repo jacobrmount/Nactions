@@ -1,6 +1,7 @@
 // Nactions/Presentation/TokenView.swift
 import SwiftUI
 import LocalAuthentication
+import NactionsKit
 
 struct TokenView: View {
     @ObservedObject var tokenManager = TokenService.shared
@@ -40,10 +41,17 @@ struct TokenView: View {
                     Button("OK", role: .cancel) {}
                 }
                 .alert("Import Successful", isPresented: $showingImportSuccess) {
-                    Button("OK", role: .cancel) {}
+                    Button("OK", role: .cancel) {
+                        // Force refresh when dismissed
+                        tokenManager.loadTokens()
+                    }
                 }
                 .alert("Import Failed", isPresented: $showingImportFailure) {
                     Button("OK", role: .cancel) {}
+                }
+                .onAppear {
+                    // Force a refresh of tokens when view appears
+                    tokenManager.loadTokens()
                 }
         }
     }
@@ -51,51 +59,57 @@ struct TokenView: View {
     private var tokenListContent: some View {
         ZStack {
             VStack {
-                List {
-                    ForEach(tokenManager.tokens, id: \.id) { token in
-                        HStack {
-                            // Checkbox for token activation
-                            Button(action: {
-                                // Only allow toggling if token is connected
-                                if token.isConnected {
-                                    tokenManager.toggleTokenActivation(token: token)
+                if tokenManager.tokens.isEmpty {
+                    Text("No tokens available")
+                        .foregroundColor(.secondary)
+                        .padding()
+                } else {
+                    List {
+                        ForEach(tokenManager.tokens, id: \.id) { token in
+                            HStack {
+                                // Checkbox for token activation
+                                Button(action: {
+                                    // Only allow toggling if token is connected
+                                    if token.isConnected {
+                                        tokenManager.toggleTokenActivation(token: token)
+                                    }
+                                }) {
+                                    Image(systemName: token.isActivated ? "checkmark.square.fill" : "square")
+                                        .foregroundColor(token.isConnected ? .blue : .gray)
+                                        .imageScale(.large)
                                 }
-                            }) {
-                                Image(systemName: token.isActivated ? "checkmark.square.fill" : "square")
-                                    .foregroundColor(token.isConnected ? .blue : .gray)
-                                    .imageScale(.large)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            .disabled(!token.isConnected)
-                            
-                            // Token details and edit button
-                            Button(action: {
-                                tokenToEdit = token
-                                showingAddToken = true
-                            }) {
-                                Text(token.name)
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(token.isConnected ? Color.green.opacity(0.7) : Color.red.opacity(0.7))
-                                    .cornerRadius(8)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            
-                            // Delete button
-                            Button(action: {
-                                tokenToDelete = token
-                                showingDeleteConfirmation = true
-                            }) {
-                                Image(systemName: "trash")
-                                    .foregroundColor(.red)
-                                    .padding()
+                                .buttonStyle(PlainButtonStyle())
+                                .disabled(!token.isConnected)
+                                
+                                // Token details and edit button
+                                Button(action: {
+                                    tokenToEdit = token
+                                    showingAddToken = true
+                                }) {
+                                    Text(token.name)
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .background(token.isConnected ? Color.green.opacity(0.7) : Color.red.opacity(0.7))
+                                        .cornerRadius(8)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                // Delete button
+                                Button(action: {
+                                    tokenToDelete = token
+                                    showingDeleteConfirmation = true
+                                }) {
+                                    Image(systemName: "trash")
+                                        .foregroundColor(.red)
+                                        .padding()
+                                }
                             }
                         }
                     }
+                    .listStyle(PlainListStyle())
                 }
-                .listStyle(PlainListStyle())
             }
             
             // Add Token Button (different style per platform)
@@ -142,10 +156,14 @@ struct TokenView: View {
             }
         }
     }
-    
+
     private func importTokens() {
         TokenBackupManager.importTokens { success in
             if success {
+                // Force refresh before showing the success message
+                DispatchQueue.main.async {
+                    self.tokenManager.loadTokens()
+                }
                 showingImportSuccess = true
             } else {
                 showingImportFailure = true

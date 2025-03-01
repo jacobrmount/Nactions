@@ -1,26 +1,10 @@
-// DataManagement/Entities/WidgetConfiguration+Extensions.swift
+// NactionsKit/DataManagement/Entities/WidgetConfigurationEntity+Extensions.swift
 import Foundation
 import CoreData
 
-// Declare the class under our namespace to avoid conflicts
-extension CoreData {
-    // Typealias to the generated class for cleaner code
-    public typealias WidgetConfigurationEntity = NactionsKit.WidgetConfigurationEntity
-}
-
-// Extend the class using the namespace
-extension CoreData.WidgetConfigurationEntity {
-    // Lifecycle methods
-    public override func awakeFromInsert() {
-        super.awakeFromInsert()
-        self.id = UUID()
-        self.lastUpdated = Date()
-    }
-    
-    // Serialization methods for widget configuration
-    
+public extension WidgetConfigurationEntity {
     /// Serializes a configuration dictionary to Data for storage
-    public func setConfiguration(_ config: [String: Any]) {
+    func setConfiguration(_ config: [String: Any]) {
         do {
             let data = try PropertyListSerialization.data(
                 fromPropertyList: config,
@@ -34,7 +18,7 @@ extension CoreData.WidgetConfigurationEntity {
     }
     
     /// Deserializes stored Data to a configuration dictionary
-    public func getConfiguration() -> [String: Any]? {
+    func getConfiguration() -> [String: Any]? {
         guard let data = self.configData else { return nil }
         
         do {
@@ -51,19 +35,21 @@ extension CoreData.WidgetConfigurationEntity {
     }
     
     /// Creates a new WidgetConfiguration object
-    public static func create(name: String,
-                             tokenID: UUID,
-                             databaseID: String?,
-                             widgetKind: String,
-                             widgetFamily: String,
-                             config: [String: Any],
-                             in context: NSManagedObjectContext) -> CoreData.WidgetConfigurationEntity {
+    static func create(name: String,
+                     tokenID: UUID,
+                     databaseID: String?,
+                     widgetKind: String,
+                     widgetFamily: String,
+                     config: [String: Any],
+                     in context: NSManagedObjectContext) -> WidgetConfigurationEntity {
         let widget = WidgetConfigurationEntity(context: context)
+        widget.id = UUID()
         widget.name = name
         widget.tokenID = tokenID
         widget.databaseID = databaseID
         widget.widgetKind = widgetKind
         widget.widgetFamily = widgetFamily
+        widget.lastUpdated = Date()
         widget.setConfiguration(config)
         return widget
     }

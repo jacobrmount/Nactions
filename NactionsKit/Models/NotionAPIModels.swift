@@ -36,7 +36,7 @@ public class JSONAny: Codable {
         var container = encoder.singleValueContainer()
         
         switch self.value {
-        case let value as NSNull:
+        case is NSNull:
             try container.encodeNil()
         case let value as Bool:
             try container.encode(value)

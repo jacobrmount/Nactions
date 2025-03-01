@@ -1,25 +1,10 @@
-// DataManagement/Entities/Task+Extensions.swift
+// NactionsKit/DataManagement/Entities/TaskEntity+Extensions.swift
 import Foundation
 import CoreData
 
-// Declare the class under our namespace to avoid conflicts
-extension CoreData {
-    // Typealias to the generated class for cleaner code
-    public typealias TaskEntity = NactionsKit.TaskEntity
-}
-
-// Extend the class using the namespace
-extension CoreData.TaskEntity {
-    // Lifecycle methods
-    public override func awakeFromInsert() {
-        super.awakeFromInsert()
-        self.lastSyncTime = Date()
-    }
-    
-    // Convenience methods
-    
+public extension TaskEntity {
     // Convert to TaskItem for widget display
-    public func toTaskItem() -> TaskItem {
+    func toTaskItem() -> TaskItem {
         return TaskItem(
             id: self.id ?? "",
             title: self.title ?? "Untitled Task",
@@ -29,7 +14,7 @@ extension CoreData.TaskEntity {
     }
     
     // Update from a TaskItem
-    public func update(from taskItem: TaskItem) {
+    func update(from taskItem: TaskItem) {
         self.id = taskItem.id
         self.title = taskItem.title
         self.isCompleted = taskItem.isCompleted
@@ -38,11 +23,11 @@ extension CoreData.TaskEntity {
     }
     
     // Create a new Task managed object from a TaskItem
-    public static func create(from taskItem: TaskItem,
-                              databaseID: String,
-                              pageID: String,
-                              tokenID: UUID,
-                              in context: NSManagedObjectContext) -> CoreData.TaskEntity {
+    static func create(from taskItem: TaskItem,
+                      databaseID: String,
+                      pageID: String,
+                      tokenID: UUID,
+                      in context: NSManagedObjectContext) -> TaskEntity {
         let newTask = TaskEntity(context: context)
         newTask.id = taskItem.id
         newTask.title = taskItem.title

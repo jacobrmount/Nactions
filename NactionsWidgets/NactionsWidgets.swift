@@ -1,10 +1,4 @@
-//
-//  NactionsWidgets.swift
-//  NactionsWidgets
-//
-//  Created by Jacob Mount on 2/27/25.
-//
-
+// NactionsWidgets/NactionsWidgets.swift
 import WidgetKit
 import SwiftUI
 

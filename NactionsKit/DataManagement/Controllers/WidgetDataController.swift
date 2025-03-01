@@ -1,4 +1,4 @@
-// DataManagement/Controllers/WidgetDataController.swift
+// NactionsKit/DataManagement/Controllers/WidgetDataController.swift
 import Foundation
 import CoreData
 import WidgetKit
@@ -230,7 +230,8 @@ public final class WidgetDataController {
         WidgetCenter.shared.reloadTimelines(ofKind: kind)
     }
     
-    /// Shares data with app group for widget access
+    // Fix for the shareDataWithWidgets method in WidgetDataController
+
     public func shareDataWithWidgets() {
         guard let userDefaults = UserDefaults(suiteName: "group.com.nactions") else {
             print("Failed to access shared UserDefaults")
@@ -243,9 +244,9 @@ public final class WidgetDataController {
         
         let tokensData = tokens.map { token -> [String: Any] in
             return [
-                "id": token.id?.uuidString ?? UUID().uuidString,
-                "name": token.name ?? "Unknown",
-                "isConnected": token.connectionStatus
+                "id": token.id.uuidString,
+                "name": token.name,
+                "isConnected": token.isConnected
             ]
         }
         
@@ -254,19 +255,18 @@ public final class WidgetDataController {
         // Share database data for each token
         let dbController = DatabaseDataController.shared
         for token in tokens {
-            if let tokenID = token.id {
-                let databases = dbController.fetchDatabases(for: tokenID)
-                let databasesData = databases.map { db -> [String: Any] in
-                    return [
-                        "id": db.id ?? "",
-                        "title": db.title ?? "Untitled",
-                        "widgetEnabled": db.widgetEnabled,
-                        "widgetType": db.widgetType ?? "",
-                        "url": db.url ?? ""
-                    ]
-                }
-                userDefaults.set(databasesData, forKey: "nactions_databases_\(tokenID.uuidString)")
+            let tokenID = token.id
+            let databases = dbController.fetchDatabases(for: tokenID)
+            let databasesData = databases.map { db -> [String: Any] in
+                return [
+                    "id": db.id ?? "",
+                    "title": db.title ?? "Untitled",
+                    "widgetEnabled": db.widgetEnabled,
+                    "widgetType": db.widgetType ?? "",
+                    "url": db.url ?? ""
+                ]
             }
+            userDefaults.set(databasesData, forKey: "nactions_databases_\(tokenID.uuidString)")
         }
         
         // Share task data for widget-enabled databases

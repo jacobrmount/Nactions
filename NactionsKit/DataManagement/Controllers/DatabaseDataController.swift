@@ -42,7 +42,7 @@ public final class DatabaseDataController {
     }
     
     /// Fetches databases as DatabaseViewModel structs for a specific token
-    public func fetchDatabaseViewModels(for tokenID: UUID) -> [DatabaseViewModel] {
+    public func fetchDatabaseViewModels(for tokenID: UUID) -> [DatabaseViewModelInternal] {
         return fetchDatabases(for: tokenID).map { $0.toDatabaseViewModel() }
     }
     
@@ -115,7 +115,7 @@ public final class DatabaseDataController {
                 newDatabase.title = notionDatabase.title?.first?.plainText ?? "Untitled"
                 newDatabase.databaseDescription = notionDatabase.description?.first?.plainText
                 newDatabase.url = notionDatabase.url
-                newDatabase.lastSyncTime = Date()
+                newDatabase.lastSyncTiime = Date()  // Using lastSyncTiime instead of lastSyncTime
                 newDatabase.widgetEnabled = false
                 newDatabase.token = token
                 

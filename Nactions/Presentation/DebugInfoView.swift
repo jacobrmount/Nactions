@@ -1,5 +1,6 @@
 // Nactions/Presentation/DebugInfoView.swift
 import SwiftUI
+import NactionsKit
 
 struct DebugInfoView: View {
     @ObservedObject var tokenService = TokenService.shared

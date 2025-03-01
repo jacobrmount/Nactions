@@ -7,9 +7,9 @@ public final class QueryDataController {
     
     private init() {}
     
-    public func saveQuery(databaseID: String, request: NotionQueryDatabaseRequest) -> CoreData.QueryEntity? {
+    public func saveQuery(databaseID: String, request: NotionQueryDatabaseRequest) -> QueryEntity? {
         let context = CoreDataStack.shared.viewContext
-        let query = CoreData.QueryEntity.create(databaseID: databaseID, request: request, in: context)
+        let query = QueryEntity.create(databaseID: databaseID, request: request, in: context)
         
         do {
             try context.save()
@@ -20,9 +20,9 @@ public final class QueryDataController {
         }
     }
     
-    public func fetchQueries(for databaseID: String) -> [CoreData.QueryEntity] {
+    public func fetchQueries(for databaseID: String) -> [QueryEntity] {
         let context = CoreDataStack.shared.viewContext
-        let request: NSFetchRequest<CoreData.QueryEntity> = CoreData.QueryEntity.fetchRequest()
+        let request = NSFetchRequest<QueryEntity>(entityName: "QueryEntity")
         request.predicate = NSPredicate(format: "databaseID == %@", databaseID)
         
         do {

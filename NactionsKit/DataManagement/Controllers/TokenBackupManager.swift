@@ -3,11 +3,11 @@ import SwiftUI
 import UniformTypeIdentifiers
 import UIKit
 
-final class TokenBackupManager {
+public final class TokenBackupManager {
     
     // MARK: - Export Tokens
     
-    static func exportTokens(completion: @escaping (Bool) -> Void) {
+    public static func exportTokens(completion: @escaping (Bool) -> Void) {
         // Fetch tokens from Core Data
         let tokens = TokenDataController.shared.fetchTokens()
         
@@ -28,12 +28,12 @@ final class TokenBackupManager {
     
     // MARK: - Import Tokens
     
-    static func importTokens(completion: @escaping (Bool) -> Void) {
+    public static func importTokens(completion: @escaping (Bool) -> Void) {
         importTokensIOS(completion: completion)
     }
     
     // MARK: - Export Tokens
-        private static func exportTokens(from fileURL: URL, completion: @escaping (Bool) -> Void) {
+    private static func exportTokens(from fileURL: URL, completion: @escaping (Bool) -> Void) {
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let rootVC = scene.windows.first?.rootViewController else {
             completion(false)
@@ -99,7 +99,7 @@ final class TokenBackupManager {
     // MARK: - Shared Implementation
     
     private static func processImportedFile(at url: URL, completion: @escaping (Bool) -> Void) {
-        // Start security-scoped access (needed on both platforms)
+        // Start security-scoped access
         guard url.startAccessingSecurityScopedResource() else {
             print("Could not access security scoped resource.")
             completion(false)
@@ -109,18 +109,60 @@ final class TokenBackupManager {
         
         do {
             let jsonData = try Data(contentsOf: url)
+            print("Read \(jsonData.count) bytes from file")
+            
+            // Try to decode as an array of custom ImportToken struct first
             let decoder = JSONDecoder()
-            let importedTokens = try decoder.decode([NotionToken].self, from: jsonData)
             
-            print("Decoded tokens: \(importedTokens)")
-            
-            for token in importedTokens {
-                print("Importing token named: \(token.name)")
-                TokenDataController.shared.saveToken(name: token.name, apiToken: token.apiToken)
+            // Define a lightweight import model that matches the expected JSON format
+            struct ImportToken: Decodable {
+                let id: UUID
+                let name: String
+                let apiToken: String
+                let isConnected: Bool
+                let isActivated: Bool?
+                let workspaceID: String?
+                let workspaceName: String?
             }
+            
+            let importedTokens = try decoder.decode([ImportToken].self, from: jsonData)
+            print("Decoded \(importedTokens.count) tokens")
+            
+            var savedCount = 0
+            for importToken in importedTokens {
+                print("Importing token named: \(importToken.name)")
+                
+                // Save using TokenDataController directly with more detailed approach
+                if let savedToken = TokenDataController.shared.saveToken(
+                    name: importToken.name,
+                    apiToken: importToken.apiToken
+                ) {
+                    // Also update additional properties
+                    TokenDataController.shared.updateToken(
+                        id: savedToken.id!,
+                        isConnected: importToken.isConnected,
+                        isActivated: importToken.isActivated ?? false,
+                        workspaceID: importToken.workspaceID,
+                        workspaceName: importToken.workspaceName
+                    )
+                    savedCount += 1
+                }
+            }
+            
+            print("Successfully saved \(savedCount) of \(importedTokens.count) tokens")
+            
+            // Force UI update on main thread
+            DispatchQueue.main.async {
+                TokenService.shared.loadTokens()
+                TokenService.shared.objectWillChange.send()
+            }
+            
             completion(true)
-        } catch {
+        } catch let error {
             print("Error importing tokens: \(error.localizedDescription)")
+            if let decodingError = error as? DecodingError {
+                print("Decoding error details: \(decodingError)")
+            }
             completion(false)
         }
     }
